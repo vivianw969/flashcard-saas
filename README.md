@@ -1,3 +1,13 @@
+Flashcard SaaS, a cutting-edge web application designed to revolutionize the way students and professionals create, manage, and study flashcards.
+Frontend: React, Next.js
+Backend: Node.js
+AI Integration: OpenAI API
+Database: Firebase Datastore
+Deployment: Vercel
+CI/CD: Vercel
+Authentication: Clerk
+Payment: Stripe
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
