@@ -1,4 +1,7 @@
 Flashcard SaaS, a cutting-edge web application designed to revolutionize the way students and professionals create, manage, and study flashcards.
+
+
+
 Frontend: React, Next.js
 Backend: Node.js
 AI Integration: OpenAI API
