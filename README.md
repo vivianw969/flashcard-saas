@@ -10,6 +10,8 @@ A modern web application that helps you create flashcards from any text using AI
 - **Responsive Layout**: Works perfectly on all devices
 - **User Authentication**: Secure login and signup using Clerk
 
+![GIF demo](images/flip-demo.gif)
+
 ## Getting Started
 
 1. Clone the repository
