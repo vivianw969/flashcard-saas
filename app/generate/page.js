@@ -8,12 +8,25 @@ import {
     Typography,
     Box, CardContent, Grid, Card, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
 } from '@mui/material'
+import { doc, collection, getDoc, writeBatch } from 'firebase/firestore'
+import { useUser } from '@clerk/nextjs'
+import db from '../../firebase'
 
 export default function Generate() {
+    const { user } = useUser()
     const [text, setText] = useState('')
     const [flashcards, setFlashcards] = useState([])
     const [setName, setSetName] = useState('')
     const [dialogOpen, setDialogOpen] = useState(false)
+    const [flippedCards, setFlippedCards] = useState({})
+
+    const handleCardClick = (index) => {
+        setFlippedCards(prev => ({
+            ...prev,
+            [index]: !prev[index]
+        }))
+    }
+
     const handleOpenDialog = () => setDialogOpen(true)
     const handleCloseDialog = () => setDialogOpen(false)
     const saveFlashcards = async () => {
@@ -36,8 +49,13 @@ export default function Generate() {
                 batch.set(userDocRef, { flashcardSets: [{ name: setName }] })
             }
 
-            const setDocRef = doc(collection(userDocRef, 'flashcardSets'), setName)
-            batch.set(setDocRef, { flashcards })
+            const setDocRef = doc(collection(userDocRef, setName))
+            batch.set(setDocRef, { 
+                flashcards: flashcards.map(card => ({
+                    front: card.front,
+                    back: card.back
+                }))
+            })
 
             await batch.commit()
 
@@ -75,62 +93,227 @@ export default function Generate() {
 
     return (
         <Container maxWidth="md">
-            <Box sx={{ my: 4 }}>
-                <Typography variant="h4" component="h1" gutterBottom>
+            <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center',
+                gap: 4,
+                p: 4,
+                maxWidth: '1200px',
+                mx: 'auto',
+            }}>
+                <Typography variant="h4" component="h1" sx={{ 
+                    fontWeight: 'bold',
+                    color: 'primary.main',
+                    textAlign: 'center',
+                    textShadow: '1px 1px 2px rgba(0,0,0,0.1)',
+                }}>
                     Generate Flashcards
                 </Typography>
-                <TextField
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    label="Enter text"
-                    fullWidth
-                    multiline
-                    rows={4}
-                    variant="outlined"
-                    sx={{ mb: 2 }}
-                />
-                <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleSubmit}
-                    fullWidth
-                >
-                    Generate Flashcards
-                </Button>
-            </Box>
 
-            {flashcards.length > 0 && (
-                <Box sx={{ mt: 4 }}>
-                    <Typography variant="h5" component="h2" gutterBottom>
-                        Generated Flashcards
+                <Box sx={{ 
+                    width: '100%',
+                    maxWidth: '800px',
+                    background: 'rgba(255, 255, 255, 0.9)',
+                    borderRadius: 2,
+                    p: 3,
+                    boxShadow: 3,
+                }}>
+                    <Typography variant="h6" gutterBottom sx={{ 
+                        fontWeight: 'bold',
+                        color: 'primary.main',
+                        mb: 2,
+                    }}>
+                        Enter your text
                     </Typography>
-                    <Grid container spacing={2}>
-                        {flashcards.map((flashcard, index) => (
-                            <Grid item xs={12} sm={6} md={4} key={index}>
-                                <Card>
-                                    <CardContent>
-                                        <Typography variant="h6">Front:</Typography>
-                                        <Typography>{flashcard.front}</Typography>
-                                        <Typography variant="h6" sx={{ mt: 2 }}>Back:</Typography>
-                                        <Typography>{flashcard.back}</Typography>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                        ))}
-                    </Grid>
+                    <TextField
+                        fullWidth
+                        multiline
+                        rows={4}
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}
+                        placeholder="Paste your text here..."
+                        variant="outlined"
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                '& fieldset': {
+                                    borderColor: 'rgba(0, 0, 0, 0.1)',
+                                    transition: 'border-color 0.3s ease',
+                                },
+                                '&:hover fieldset': {
+                                    borderColor: 'primary.main',
+                                },
+                                '&.Mui-focused fieldset': {
+                                    borderColor: 'primary.main',
+                                    borderWidth: 2,
+                                },
+                            },
+                            '& .MuiInputBase-input': {
+                                fontSize: '1rem',
+                                lineHeight: 1.5,
+                            },
+                        }}
+                    />
+                    <Box sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        mt: 3,
+                        gap: 2,
+                    }}>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleSubmit}
+                            disabled={!text.trim()}
+                            sx={{
+                                px: 4,
+                                py: 1.5,
+                                fontSize: '1.1rem',
+                                fontWeight: 'bold',
+                                boxShadow: 2,
+                                background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                                '&:hover': {
+                                    boxShadow: 4,
+                                    background: 'linear-gradient(45deg, #1976D2 30%, #1E88E5 90%)',
+                                },
+                                '&.Mui-disabled': {
+                                    background: 'rgba(0, 0, 0, 0.12)',
+                                }
+                            }}
+                        >
+                            Generate Flashcards
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            color="primary"
+                            onClick={() => setText('')}
+                            sx={{
+                                px: 4,
+                                py: 1.5,
+                                fontSize: '1.1rem',
+                                fontWeight: 'bold',
+                                borderWidth: 2,
+                                '&:hover': {
+                                    borderWidth: 2,
+                                }
+                            }}
+                        >
+                            Clear
+                        </Button>
+                    </Box>
                 </Box>
-            )}
-            {flashcards.length > 0 && (
-                <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
-                    <Button variant="contained" color="primary" onClick={handleOpenDialog}>
-                        Save Flashcards
-                    </Button>
-                </Box>
-            )}
-            <Dialog open={dialogOpen} onClose={handleCloseDialog}>
-                <DialogTitle>Save Flashcard Set</DialogTitle>
+
+                {flashcards.length > 0 && (
+                    <Box sx={{ 
+                        width: '100%',
+                        background: 'rgba(255, 255, 255, 0.9)',
+                        borderRadius: 2,
+                        p: 3,
+                        boxShadow: 3,
+                    }}>
+                        <Typography variant="h6" gutterBottom sx={{ 
+                            fontWeight: 'bold',
+                            color: 'primary.main',
+                            mb: 3,
+                        }}>
+                            Generated Flashcards
+                        </Typography>
+                        <Grid container spacing={2}>
+                            {flashcards.slice(0, 9).map((card, index) => (
+                                <Grid item xs={12} sm={6} md={4} key={index}>
+                                    <Card 
+                                        onClick={() => handleCardClick(index)}
+                                        sx={{ 
+                                            height: '200px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s ease',
+                                            position: 'relative',
+                                            '&:hover': {
+                                                transform: 'translateY(-8px)',
+                                                boxShadow: 6,
+                                            },
+                                            background: flippedCards[index] 
+                                                ? 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)'
+                                                : 'linear-gradient(45deg, #4CAF50 30%, #81C784 90%)',
+                                            color: 'white',
+                                        }}
+                                    >
+                                        <CardContent sx={{ 
+                                            height: '100%',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            textAlign: 'center',
+                                            p: 2,
+                                            overflow: 'hidden',
+                                        }}>
+                                            <Typography variant="body1" sx={{ 
+                                                wordBreak: 'break-word',
+                                                maxHeight: '100%',
+                                                overflow: 'hidden',
+                                            }}>
+                                                {flippedCards[index] ? card.back : card.front}
+                                            </Typography>
+                                        </CardContent>
+                                    </Card>
+                                </Grid>
+                            ))}
+                        </Grid>
+                        <Box sx={{ 
+                            display: 'flex', 
+                            justifyContent: 'center', 
+                            mt: 3,
+                            gap: 2,
+                        }}>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={handleSubmit}
+                                disabled={flashcards.length === 0}
+                                sx={{
+                                    px: 4,
+                                    py: 1.5,
+                                    fontSize: '1.1rem',
+                                    fontWeight: 'bold',
+                                    boxShadow: 2,
+                                    background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                                    '&:hover': {
+                                        boxShadow: 4,
+                                        background: 'linear-gradient(45deg, #1976D2 30%, #1E88E5 90%)',
+                                    },
+                                    '&.Mui-disabled': {
+                                        background: 'rgba(0, 0, 0, 0.12)',
+                                    }
+                                }}
+                            >
+                                Generate New Set
+                            </Button>
+                        </Box>
+                    </Box>
+                )}
+            </Box>
+            <Dialog 
+                open={dialogOpen} 
+                onClose={handleCloseDialog}
+                PaperProps={{
+                    sx: {
+                        borderRadius: 2,
+                        minWidth: '400px',
+                        background: 'linear-gradient(45deg, #f5f7fa 0%, #c3cfe2 100%)',
+                    }
+                }}
+            >
+                <DialogTitle sx={{ 
+                    fontWeight: 'bold',
+                    color: 'primary.main',
+                    textAlign: 'center',
+                    textShadow: '1px 1px 2px rgba(0,0,0,0.1)',
+                }}>
+                    Save Flashcard Set
+                </DialogTitle>
                 <DialogContent>
-                    <DialogContentText>
+                    <DialogContentText sx={{ mb: 2 }}>
                         Please enter a name for your flashcard set.
                     </DialogContentText>
                     <TextField
@@ -141,11 +324,41 @@ export default function Generate() {
                         fullWidth
                         value={setName}
                         onChange={(e) => setSetName(e.target.value)}
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                '&:hover fieldset': {
+                                    borderColor: 'primary.main',
+                                },
+                                backgroundColor: 'rgba(255,255,255,0.9)',
+                            },
+                        }}
                     />
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseDialog}>Cancel</Button>
-                    <Button onClick={saveFlashcards} color="primary">
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Button 
+                        onClick={handleCloseDialog}
+                        sx={{ 
+                            color: 'text.secondary',
+                            '&:hover': {
+                                backgroundColor: 'action.hover',
+                            }
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button 
+                        onClick={saveFlashcards} 
+                        color="primary"
+                        variant="contained"
+                        sx={{
+                            boxShadow: 2,
+                            background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                            '&:hover': {
+                                boxShadow: 4,
+                                background: 'linear-gradient(45deg, #1976D2 30%, #1E88E5 90%)',
+                            }
+                        }}
+                    >
                         Save
                     </Button>
                 </DialogActions>
