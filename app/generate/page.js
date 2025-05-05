@@ -246,12 +246,27 @@ export default function Generate() {
                                             alignItems: 'center',
                                             textAlign: 'center',
                                             p: 2,
-                                            overflow: 'hidden',
+                                            overflowY: 'auto',
+                                            '&::-webkit-scrollbar': {
+                                                width: '6px',
+                                            },
+                                            '&::-webkit-scrollbar-track': {
+                                                background: 'transparent',
+                                            },
+                                            '&::-webkit-scrollbar-thumb': {
+                                                background: 'rgba(255, 255, 255, 0.3)',
+                                                borderRadius: '3px',
+                                                '&:hover': {
+                                                    background: 'rgba(255, 255, 255, 0.5)',
+                                                },
+                                            },
                                         }}>
                                             <Typography variant="body1" sx={{ 
                                                 wordBreak: 'break-word',
                                                 maxHeight: '100%',
-                                                overflow: 'hidden',
+                                                overflow: 'auto',
+                                                fontSize: '0.9rem',
+                                                lineHeight: 1.4,
                                             }}>
                                                 {flippedCards[index] ? card.back : card.front}
                                             </Typography>
